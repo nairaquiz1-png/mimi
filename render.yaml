@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: mimi
+    env: python
+    plan: free
+    buildCommand: "./venv/bin/pip install -r requirements.txt"
+    startCommand: "gunicorn mimi_platform.wsgi:application"
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: mimi_platform.settings
+      - key: PYTHONUNBUFFERED
+        value: "1"
