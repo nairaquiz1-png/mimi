@@ -6,7 +6,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-secret-key-change-later')
 
-DEBUG = False  # Important for Render — set to False
+DEBUG = True  # Important for Render — set to True
 
 ALLOWED_HOSTS = ["*"]
 
