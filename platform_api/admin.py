@@ -146,3 +146,10 @@ class MessageAdmin(admin.ModelAdmin):
     search_fields = ('sender__username', 'room__id', 'text')
     list_filter = ('read',)
     readonly_fields = ('created_at',)
+
+# ----------------------------
+# Customize Django Admin site
+# ----------------------------
+admin.site.site_header = "Mimi Admin"         # Top header
+admin.site.site_title = "Mimi Admin Portal"   # Browser tab title
+admin.site.index_title = "Welcome to Mimi Admin"  # Dashboard title
