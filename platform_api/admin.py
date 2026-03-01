@@ -131,6 +131,8 @@ class JobMilestoneAdmin(admin.ModelAdmin):
     list_filter = ('completed',)
     ordering = ('-created_at',)
 
+
+
 # ----------------------------
 # Chat System
 # ----------------------------
@@ -153,3 +155,28 @@ class MessageAdmin(admin.ModelAdmin):
 admin.site.site_header = "Mimi Admin"         # Top header
 admin.site.site_title = "Mimi Admin Portal"   # Browser tab title
 admin.site.index_title = "Welcome to Mimi Admin"  # Dashboard title
+
+from .models import Wallet, Escrow, Transaction
+
+# ----------------------------
+# Wallet, Escrow & Transaction
+# ----------------------------
+@admin.register(Wallet)
+class WalletAdmin(admin.ModelAdmin):
+    list_display = ('user', 'balance')
+    search_fields = ('user__username',)
+    ordering = ('user__username',)
+
+@admin.register(Escrow)
+class EscrowAdmin(admin.ModelAdmin):
+    list_display = ('job', 'milestone', 'customer', 'provider', 'amount', 'released')
+    search_fields = ('job__id', 'milestone__title', 'customer__username', 'provider__user__username')
+    list_filter = ('released',)
+    ordering = ('-job__id',)
+
+@admin.register(Transaction)
+class TransactionAdmin(admin.ModelAdmin):
+    list_display = ('wallet', 'transaction_type', 'amount', 'description', 'created_at')
+    search_fields = ('wallet__user__username', 'transaction_type', 'description')
+    list_filter = ('transaction_type',)
+    ordering = ('-created_at',)
