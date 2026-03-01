@@ -6,6 +6,8 @@ from rest_framework.response import Response
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
+from .models import JobMilestone, Escrow, Transaction, Wallet
+
 
 from .models import (
     ChatRoom,
@@ -220,3 +222,41 @@ class FundMilestoneView(APIView):
             return Response({"detail": "Milestone funded successfully."})
         except JobMilestone.DoesNotExist:
             return Response({"detail": "Milestone not found."}, status=404)
+
+class ReleaseMilestoneEscrowView(APIView):
+    permission_classes = [IsAuthenticated, IsProvider]
+
+    def post(self, request, milestone_id):
+        user = request.user
+        try:
+            milestone = JobMilestone.objects.get(id=milestone_id)
+            escrow = Escrow.objects.get(milestone=milestone)
+
+            if escrow.released:
+                return Response({"detail": "Escrow already released."}, status=400)
+
+            if milestone.job.provider.user != user:
+                return Response({"detail": "You are not the provider for this milestone."}, status=403)
+
+            # Add amount to provider wallet
+            provider_wallet, _ = Wallet.objects.get_or_create(user=user)
+            provider_wallet.balance += escrow.amount
+            provider_wallet.save()
+
+            # Mark escrow released
+            escrow.released = True
+            escrow.save()
+
+            # Log transaction
+            Transaction.objects.create(
+                wallet=provider_wallet,
+                transaction_type="credit",
+                amount=escrow.amount,
+                description=f"Released escrow for milestone {milestone.title}"
+            )
+
+            return Response({"detail": "Escrow released successfully."})
+        except JobMilestone.DoesNotExist:
+            return Response({"detail": "Milestone not found."}, status=404)
+        except Escrow.DoesNotExist:
+            return Response({"detail": "Escrow record not found."}, status=404)

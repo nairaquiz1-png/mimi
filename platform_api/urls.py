@@ -14,7 +14,8 @@ from .views import (
     ChatRoomListView,
     ProviderOnlyView,
     CustomerOnlyView,
-    FundMilestoneView,  # <-- ADD THIS
+    FundMilestoneView, 
+     ReleaseMilestoneEscrowView # <-- ADD THIS
 )
 
 urlpatterns = [
@@ -47,6 +48,7 @@ urlpatterns = [
 
     # ---------- NEW ----------
     path("milestones/<int:milestone_id>/fund/", FundMilestoneView.as_view(), name="fund-milestone"),
+    path("milestones/<int:milestone_id>/release/", ReleaseMilestoneEscrowView.as_view(), name="milestone-release"),
 
     # ----------------------------
     # Chat

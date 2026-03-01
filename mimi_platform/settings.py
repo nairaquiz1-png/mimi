@@ -149,3 +149,10 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 # DEFAULT AUTO FIELD
 # ================================
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# ================================
+# FLUTTERWAVE (Week 7 Payments)
+# ================================
+FLUTTERWAVE_PUBLIC_KEY = os.environ.get("FLUTTERWAVE_PUBLIC_KEY", "FLW_TEST_PUBLIC_KEY")
+FLUTTERWAVE_SECRET_KEY = os.environ.get("FLUTTERWAVE_SECRET_KEY", "FLW_TEST_SECRET_KEY")
+FLUTTERWAVE_BASE_URL = "https://api.flutterwave.com/v3"
