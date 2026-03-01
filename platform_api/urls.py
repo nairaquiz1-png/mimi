@@ -14,6 +14,7 @@ from .views import (
     ChatRoomListView,
     ProviderOnlyView,
     CustomerOnlyView,
+    FundMilestoneView,  # <-- ADD THIS
 )
 
 urlpatterns = [
@@ -43,6 +44,9 @@ urlpatterns = [
     path("jobs/<int:pk>/", JobDetailView.as_view(), name="job-detail"),
     path("bookings/", BookingListCreateView.as_view(), name="booking-list-create"),
     path("milestones/<int:pk>/", JobMilestoneUpdateView.as_view(), name="milestone-update"),
+
+    # ---------- NEW ----------
+    path("milestones/<int:milestone_id>/fund/", FundMilestoneView.as_view(), name="fund-milestone"),
 
     # ----------------------------
     # Chat

@@ -36,8 +36,8 @@ INSTALLED_APPS = [
 # ================================
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',  # must be near the top
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -45,8 +45,18 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True
+# ================================
+# CORS SETTINGS
+# ================================
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOWED_ORIGINS = [
+    "http://62.171.148.243:3000",
+]
+CORS_ALLOW_CREDENTIALS = True  # optional if you use cookies/auth headers
 
+# ================================
+# ROOT URL CONF
+# ================================
 ROOT_URLCONF = 'mimi_platform.urls'
 
 # ================================
@@ -72,9 +82,6 @@ WSGI_APPLICATION = 'mimi_platform.wsgi.application'
 # ================================
 # DATABASE
 # ================================
-# Uses PostgreSQL in production (VPS)
-# Falls back to SQLite locally
-
 if os.environ.get("DB_NAME"):
     DATABASES = {
         "default": {

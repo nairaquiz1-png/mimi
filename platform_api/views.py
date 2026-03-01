@@ -4,6 +4,8 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from django.core.exceptions import ObjectDoesNotExist
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 
 from .models import (
     ChatRoom,
@@ -25,6 +27,7 @@ User = get_user_model()
 # ----------------------------
 # User Registration / Auth
 # ----------------------------
+@method_decorator(csrf_exempt, name='dispatch')
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
@@ -172,3 +175,48 @@ class ChatRoomListView(generics.ListAPIView):
     def get_queryset(self):
         user = self.request.user
         return ChatRoom.objects.filter(job__customer=user) | ChatRoom.objects.filter(job__service__provider__user=user)
+    
+class FundMilestoneView(APIView):
+    permission_classes = [IsAuthenticated, IsCustomer]
+
+    def post(self, request, milestone_id):
+        user = request.user
+        try:
+            milestone = JobMilestone.objects.get(id=milestone_id)
+            if milestone.funded:
+                return Response({"detail": "Milestone already funded."}, status=400)
+            if milestone.job.customer != user:
+                return Response({"detail": "Not your milestone."}, status=403)
+            
+            wallet = user.wallet
+            if wallet.balance < milestone.amount:
+                return Response({"detail": "Insufficient balance."}, status=400)
+            
+            # Deduct from customer wallet
+            wallet.balance -= milestone.amount
+            wallet.save()
+
+            # Create escrow
+            Escrow.objects.create(
+                job=milestone.job,
+                milestone=milestone,
+                customer=user,
+                provider=milestone.job.provider,
+                amount=milestone.amount,
+            )
+
+            # Mark milestone funded
+            milestone.funded = True
+            milestone.save()
+
+            # Log transaction
+            Transaction.objects.create(
+                wallet=wallet,
+                transaction_type="debit",
+                amount=milestone.amount,
+                description=f"Funded milestone {milestone.title} for Job {milestone.job.id}"
+            )
+
+            return Response({"detail": "Milestone funded successfully."})
+        except JobMilestone.DoesNotExist:
+            return Response({"detail": "Milestone not found."}, status=404)

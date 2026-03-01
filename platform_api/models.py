@@ -150,6 +150,7 @@ class JobMilestone(models.Model):
     title = models.CharField(max_length=255)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     completed = models.BooleanField(default=False)
+    funded = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -179,3 +180,57 @@ class Message(models.Model):
 
     def __str__(self):
         return f"{self.sender} in Room {self.room.id}"
+    
+# ----------------------------
+# Wallet System (Week 6)
+# ----------------------------
+
+class Wallet(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="wallet"
+    )
+    balance = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} Wallet"
+
+
+class Escrow(models.Model):
+    job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name="escrows")
+    milestone = models.OneToOneField(JobMilestone, on_delete=models.CASCADE, related_name="escrow")
+    customer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="escrow_payments")
+    provider = models.ForeignKey(ProviderProfile, on_delete=models.CASCADE, related_name="escrow_earnings")
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    released = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Escrow for Job {self.job.id} - {self.amount}"
+
+
+class Transaction(models.Model):
+    TRANSACTION_TYPES = (
+        ("credit", "Credit"),
+        ("debit", "Debit"),
+    )
+
+    wallet = models.ForeignKey(Wallet, on_delete=models.CASCADE, related_name="transactions")
+    transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPES)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    description = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.wallet.user.username} - {self.transaction_type} - {self.amount}"
+    
+
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+@receiver(post_save, sender=CustomUser)
+def create_user_wallet(sender, instance, created, **kwargs):
+    if created:
+        Wallet.objects.create(user=instance)
