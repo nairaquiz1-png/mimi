@@ -14,8 +14,9 @@ from .views import (
     ChatRoomListView,
     ProviderOnlyView,
     CustomerOnlyView,
-    FundMilestoneView, 
-     ReleaseMilestoneEscrowView # <-- ADD THIS
+    FundMilestoneView,
+    ReleaseMilestoneView,
+    SubmitMilestoneWorkView,
 )
 
 urlpatterns = [
@@ -44,11 +45,14 @@ urlpatterns = [
     path("jobs/", JobListCreateView.as_view(), name="job-list-create"),
     path("jobs/<int:pk>/", JobDetailView.as_view(), name="job-detail"),
     path("bookings/", BookingListCreateView.as_view(), name="booking-list-create"),
-    path("milestones/<int:pk>/", JobMilestoneUpdateView.as_view(), name="milestone-update"),
 
-    # ---------- NEW ----------
+    # ----------------------------
+    # Milestones
+    # ----------------------------
+    path("milestones/<int:pk>/", JobMilestoneUpdateView.as_view(), name="milestone-update"),
     path("milestones/<int:milestone_id>/fund/", FundMilestoneView.as_view(), name="fund-milestone"),
-    path("milestones/<int:milestone_id>/release/", ReleaseMilestoneEscrowView.as_view(), name="milestone-release"),
+    path("milestones/<int:milestone_id>/submit/", SubmitMilestoneWorkView.as_view(), name="submit-milestone"),
+    path("milestones/<int:milestone_id>/release/", ReleaseMilestoneView.as_view(), name="milestone-release"),
 
     # ----------------------------
     # Chat

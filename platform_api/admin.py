@@ -126,9 +126,9 @@ class BookingAdmin(admin.ModelAdmin):
 # ----------------------------
 @admin.register(JobMilestone)
 class JobMilestoneAdmin(admin.ModelAdmin):
-    list_display = ('title', 'job', 'amount', 'completed', 'created_at')
+    list_display = ('title', 'job', 'amount', 'status', 'created_at')
     search_fields = ('title', 'job__id')
-    list_filter = ('completed',)
+    list_filter = ('status',)
     ordering = ('-created_at',)
 
 

@@ -155,6 +155,28 @@ class JobMilestone(models.Model):
 
     def __str__(self):
         return f"{self.title} - {'Done' if self.completed else 'Pending'}"
+class JobMilestone(models.Model):
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("funded", "Funded"),
+        ("submitted", "Submitted"),
+        ("released", "Released"),
+    ]
+
+    job = models.ForeignKey("Job", related_name="milestones", on_delete=models.CASCADE)
+    title = models.CharField(max_length=255)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+
+    funded = models.BooleanField(default=False)
+    released = models.BooleanField(default=False)
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="pending"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
 
 
 # ----------------------------
@@ -234,3 +256,5 @@ from django.dispatch import receiver
 def create_user_wallet(sender, instance, created, **kwargs):
     if created:
         Wallet.objects.create(user=instance)
+
+

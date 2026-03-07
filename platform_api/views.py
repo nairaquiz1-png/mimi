@@ -223,8 +223,8 @@ class FundMilestoneView(APIView):
         except JobMilestone.DoesNotExist:
             return Response({"detail": "Milestone not found."}, status=404)
 
-class ReleaseMilestoneEscrowView(APIView):
-    permission_classes = [IsAuthenticated, IsProvider]
+class ReleaseMilestoneView(APIView):
+    permission_classes = [IsAuthenticated, IsCustomer]
 
     def post(self, request, milestone_id):
         user = request.user
@@ -232,31 +232,76 @@ class ReleaseMilestoneEscrowView(APIView):
             milestone = JobMilestone.objects.get(id=milestone_id)
             escrow = Escrow.objects.get(milestone=milestone)
 
+            if milestone.job.customer != user:
+                return Response({"detail": "You are not the customer for this milestone."}, status=403)
+
             if escrow.released:
                 return Response({"detail": "Escrow already released."}, status=400)
 
-            if milestone.job.provider.user != user:
-                return Response({"detail": "You are not the provider for this milestone."}, status=403)
+            amount = escrow.amount
+            admin_cut = amount * 0.2
+            provider_amount = amount * 0.8
 
-            # Add amount to provider wallet
-            provider_wallet, _ = Wallet.objects.get_or_create(user=user)
-            provider_wallet.balance += escrow.amount
+            # Update provider wallet
+            provider_wallet, _ = Wallet.objects.get_or_create(user=milestone.job.provider.user)
+            provider_wallet.balance += provider_amount
             provider_wallet.save()
 
-            # Mark escrow released
+            # Update admin wallet (single admin user)
+            admin_wallet = Wallet.objects.get(user__is_superuser=True)
+            admin_wallet.balance += admin_cut
+            admin_wallet.save()
+
+            # Mark escrow as released
             escrow.released = True
             escrow.save()
 
-            # Log transaction
+            # Log transactions
             Transaction.objects.create(
                 wallet=provider_wallet,
                 transaction_type="credit",
-                amount=escrow.amount,
-                description=f"Released escrow for milestone {milestone.title}"
+                amount=provider_amount,
+                description=f"Milestone {milestone.title} released from Job {milestone.job.id}"
+            )
+            Transaction.objects.create(
+                wallet=admin_wallet,
+                transaction_type="credit",
+                amount=admin_cut,
+                description=f"Platform cut for milestone {milestone.title} Job {milestone.job.id}"
             )
 
-            return Response({"detail": "Escrow released successfully."})
+            return Response({"detail": "Milestone released successfully."})
+
         except JobMilestone.DoesNotExist:
             return Response({"detail": "Milestone not found."}, status=404)
         except Escrow.DoesNotExist:
             return Response({"detail": "Escrow record not found."}, status=404)
+
+class SubmitMilestoneWorkView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, milestone_id):
+        try:
+            milestone = JobMilestone.objects.get(id=milestone_id)
+
+            # Ensure the logged-in user is the provider
+            if milestone.job.provider.user != request.user:
+                return Response(
+                    {"detail": "You are not the provider for this job."},
+                    status=403
+                )
+
+            # Ensure milestone is funded first
+            if milestone.status != "funded":
+                return Response(
+                    {"detail": "Milestone must be funded before submitting work."},
+                    status=400
+                )
+
+            milestone.status = "submitted"
+            milestone.save()
+
+            return Response({"detail": "Work submitted successfully."})
+
+        except JobMilestone.DoesNotExist:
+            return Response({"detail": "Milestone not found."}, status=404)
