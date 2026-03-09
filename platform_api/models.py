@@ -143,41 +143,27 @@ class JobStatusLog(models.Model):
 
     def __str__(self):
         return f"Job #{self.job.id} → {self.status}"
-
-
-class JobMilestone(models.Model):
-    job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name="milestones")
-    title = models.CharField(max_length=255)
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
-    completed = models.BooleanField(default=False)
-    funded = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.title} - {'Done' if self.completed else 'Pending'}"
+    
 class JobMilestone(models.Model):
     STATUS_CHOICES = [
         ("pending", "Pending"),
-        ("funded", "Funded"),
         ("submitted", "Submitted"),
+        ("funded", "Funded"),
         ("released", "Released"),
     ]
 
-    job = models.ForeignKey("Job", related_name="milestones", on_delete=models.CASCADE)
+    job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name="milestones")
     title = models.CharField(max_length=255)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
-
     funded = models.BooleanField(default=False)
     released = models.BooleanField(default=False)
-
     status = models.CharField(
-        max_length=20,
-        choices=STATUS_CHOICES,
-        default="pending"
+        max_length=20, choices=STATUS_CHOICES, default="pending"
     )
-
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self):
+        return f"{self.title} ({self.job}) - {self.status}"
 
 # ----------------------------
 # ChatRoom & Message (Week 5)
@@ -256,5 +242,21 @@ from django.dispatch import receiver
 def create_user_wallet(sender, instance, created, **kwargs):
     if created:
         Wallet.objects.create(user=instance)
+
+
+# At the bottom of models.py
+
+class JobLocationLog(models.Model):
+    job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name="location_logs")
+    provider = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, limit_choices_to={"role": "provider"})
+    lat = models.FloatField()
+    lng = models.FloatField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['timestamp']
+
+    def __str__(self):
+        return f"Job {self.job.id} - {self.lat}, {self.lng} @ {self.timestamp}"
 
 

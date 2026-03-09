@@ -15,6 +15,7 @@ ALLOWED_HOSTS = ["*"]
 # INSTALLED APPS
 # ================================
 INSTALLED_APPS = [
+    'channels',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -78,6 +79,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'mimi_platform.wsgi.application'
+ASGI_APPLICATION = "mimi_platform.asgi.application"
 
 # ================================
 # DATABASE
@@ -156,3 +158,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 FLUTTERWAVE_PUBLIC_KEY = os.environ.get("FLUTTERWAVE_PUBLIC_KEY", "FLW_TEST_PUBLIC_KEY")
 FLUTTERWAVE_SECRET_KEY = os.environ.get("FLUTTERWAVE_SECRET_KEY", "FLW_TEST_SECRET_KEY")
 FLUTTERWAVE_BASE_URL = "https://api.flutterwave.com/v3"
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],
+        },
+    },
+}

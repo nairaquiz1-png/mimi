@@ -113,6 +113,34 @@ class JobListCreateView(generics.ListCreateAPIView):
                 completed=False
             )
 
+from django.http import JsonResponse
+from .utils import broadcast_job_location
+from .models import Job
+
+def update_job_location(request, job_id):
+    """
+    Endpoint to update job location and broadcast to WebSocket clients.
+    Expects POST data: lat, lng, status
+    """
+    lat = request.POST.get("lat")
+    lng = request.POST.get("lng")
+    status = request.POST.get("status", "in_progress")
+
+    # Save to database
+    try:
+        job = Job.objects.get(id=job_id)
+        job.lat = lat
+        job.lng = lng
+        job.status = status
+        job.save()
+    except Job.DoesNotExist:
+        return JsonResponse({"success": False, "detail": "Job not found"}, status=404)
+
+    # Broadcast to WebSocket
+    broadcast_job_location(job_id, lat, lng, status)
+
+    return JsonResponse({"success": True})
+
 
 class JobDetailView(generics.RetrieveUpdateAPIView):
     queryset = Job.objects.all()

@@ -17,6 +17,7 @@ from .views import (
     FundMilestoneView,
     ReleaseMilestoneView,
     SubmitMilestoneWorkView,
+    update_job_location,  # <- new import
 )
 
 urlpatterns = [
@@ -44,6 +45,7 @@ urlpatterns = [
     # ----------------------------
     path("jobs/", JobListCreateView.as_view(), name="job-list-create"),
     path("jobs/<int:pk>/", JobDetailView.as_view(), name="job-detail"),
+    path("jobs/<int:job_id>/update-location/", update_job_location, name="update-job-location"),  # <- new
     path("bookings/", BookingListCreateView.as_view(), name="booking-list-create"),
 
     # ----------------------------
