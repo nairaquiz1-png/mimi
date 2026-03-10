@@ -17,7 +17,8 @@ from .views import (
     FundMilestoneView,
     ReleaseMilestoneView,
     SubmitMilestoneWorkView,
-    update_job_location,  # <- new import
+    update_job_location, 
+    FundWalletView, # <- new import
 )
 
 urlpatterns = [
@@ -55,6 +56,11 @@ urlpatterns = [
     path("milestones/<int:milestone_id>/fund/", FundMilestoneView.as_view(), name="fund-milestone"),
     path("milestones/<int:milestone_id>/submit/", SubmitMilestoneWorkView.as_view(), name="submit-milestone"),
     path("milestones/<int:milestone_id>/release/", ReleaseMilestoneView.as_view(), name="milestone-release"),
+
+    # ----------------------------
+    # Wallet
+    # ----------------------------
+    path("wallet/fund/", FundWalletView.as_view(), name="fund-wallet"),
 
     # ----------------------------
     # Chat

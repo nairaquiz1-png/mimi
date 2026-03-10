@@ -6,7 +6,10 @@ from rest_framework.response import Response
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
+import requests
+from django.conf import settings
 from .models import JobMilestone, Escrow, Transaction, Wallet
+from .payment_serializers import FundWalletSerializer
 
 
 from .models import (
@@ -333,3 +336,70 @@ class SubmitMilestoneWorkView(APIView):
 
         except JobMilestone.DoesNotExist:
             return Response({"detail": "Milestone not found."}, status=404)
+        
+
+# ----------------------------
+# Wallet funding (Flutterwave demo)
+# ----------------------------
+
+class FundWalletView(APIView):
+    """
+    Create a Flutterwave payment link for funding wallet.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = FundWalletSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        amount = serializer.validated_data["amount"]
+        user = request.user
+
+        # Create a pending Transaction
+        transaction = Transaction.objects.create(
+            wallet=user.wallet,
+            transaction_type="credit",
+            amount=amount,
+            status="pending",
+            description="Wallet funding via Flutterwave demo"
+        )
+
+        # Make sure FRONTEND_URL exists
+        frontend_url = getattr(settings, "FRONTEND_URL", "http://localhost:3000")
+
+        payload = {
+            "tx_ref": f"wallet-{transaction.id}",
+            "amount": float(amount),
+            "currency": "NGN",
+            "redirect_url": f"{frontend_url}/wallet/fund/callback",
+            "payment_options": "card",
+            "customer": {
+                "email": user.email,
+                "phonenumber": getattr(user, "phone", ""),
+                "name": f"{user.first_name} {user.last_name}".strip() or user.username,
+            },
+            "customizations": {
+                "title": "Mimi Wallet Fund",
+                "description": "Funding your wallet",
+            },
+        }
+
+        headers = {
+            "Authorization": f"Bearer {settings.FLUTTERWAVE_SECRET_KEY}",
+            "Content-Type": "application/json"
+        }
+
+        try:
+            response = requests.post("https://api.flutterwave.com/v3/payments", json=payload, headers=headers, timeout=10)
+            response.raise_for_status()
+        except requests.RequestException as e:
+            # Log for debugging
+            print(f"Flutterwave request failed: {e}")
+            return Response({"detail": "Error creating payment link"}, status=500)
+
+        data = response.json()
+        if data.get("status") != "success":
+            return Response({"detail": "Failed to create payment link"}, status=500)
+
+        payment_link = data["data"]["link"]
+        return Response({"payment_link": payment_link})
