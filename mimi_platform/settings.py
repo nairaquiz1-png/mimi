@@ -1,5 +1,11 @@
 from pathlib import Path
 import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()  # By default, it loads .env in the same directory as settings.py
+from pathlib import Path
+import os
 from datetime import timedelta
 
 # ================================
