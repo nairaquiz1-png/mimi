@@ -1,3 +1,5 @@
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import get_user_model
 from rest_framework import generics
 from rest_framework.views import APIView
@@ -403,3 +405,26 @@ class FundWalletView(APIView):
 
         payment_link = data["data"]["link"]
         return Response({"payment_link": payment_link})
+    
+
+# ----------------------------
+# Custom JWT login returning role
+# ----------------------------
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        # include role in token claims
+        token['role'] = getattr(user, 'role', 'customer')  # fallback to 'customer' if no role
+        return token
+
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        # add role to response JSON
+        data['role'] = getattr(self.user, 'role', 'customer')
+        return data
+
+
+class MyTokenObtainPairView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer
+

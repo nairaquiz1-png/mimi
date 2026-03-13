@@ -18,7 +18,8 @@ from .views import (
     ReleaseMilestoneView,
     SubmitMilestoneWorkView,
     update_job_location, 
-    FundWalletView, # <- new import
+    FundWalletView,
+    MyTokenObtainPairView # <- new import
 )
 
 urlpatterns = [
@@ -26,6 +27,7 @@ urlpatterns = [
     # Auth
     # ----------------------------
     path("auth/register/", RegisterView.as_view(), name="register"),
+    path("auth/login/", MyTokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("auth/me/", MeView.as_view(), name="me"),
 
     # ----------------------------
